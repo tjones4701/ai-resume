@@ -20,6 +20,7 @@
     "eslint-config-next": "13.4.5",
     "next": "13.4.5",
     "openai-edge": "^1.0.0",
+    "pdf2json": "^3.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-json-view-lite": "^0.9.6",
