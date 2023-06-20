@@ -48,7 +48,14 @@ async function parsePdf(content:Output): Promise<ParsedPdf> {
     return results;
 }
 
-async function analysePdf(content: ParsedPdf) {
+export type JobAdvertisement = {
+    job_title: string;
+    overview: string;
+    responsibilities: string[];
+    selection_criteria: {category: string, description: string}[]
+}
+
+async function analysePdf(content: ParsedPdf): Promise<JobAdvertisement> {
     const promptParts: string[] = ["Please extract information from a job advertisement and return a response in the same format as the following example data:"];
     const exampleResponse = {
         "job_title": "{job_title}",
@@ -69,6 +76,14 @@ async function analysePdf(content: ParsedPdf) {
     const responseText = await createChatCompletion(promptParts.join("\n"));
     return JSON.parse(responseText);
 }
+
+async function createResume(content: JobAdvertisement) {
+    const promptParts: string[] = ["Please create a resume for the following job advertisement data"];
+    promptParts.push(JSON.stringify(content));
+
+    const responseText = await createChatCompletion(promptParts.join("\n"));
+    return responseText;
+}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const filePath = path.resolve(__dirname,"../../../../files");
     const file = path.resolve(filePath,"file.pdf");
@@ -77,5 +92,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const processed = await analysePdf(parsedPdf);
 
-    res.json(processed ?? {error: "No data"});
+    const response = await createResume(processed); 
+    const result = {
+        advertisement: response,
+        resume: response
+    }
+
+    res.json(result ?? {error: "No data"});
 }
