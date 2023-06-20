@@ -92,8 +92,7 @@ async function analysePdf(content: ParsedPdf): Promise<JobAdvertisement> {
 }
 
 async function createResume(content: JobAdvertisement): Promise<JobResponse> {
-    const promptParts: string[] = ["Using the following example data format create a resume json object responding to a job advertisement. Please respond with only the json data."];
-    promptParts.push("The example data set is:");
+    const promptParts: string[] = ["Please assist me in applying for a job. The job application will need to be created in the following format:"];
     const exampleResume: JobResponse = {
         name: "[name]",
         address:"[address]",
@@ -105,9 +104,13 @@ async function createResume(content: JobAdvertisement): Promise<JobResponse> {
 
     promptParts.push(JSON.stringify(exampleResume));
 
-    promptParts.push("The job advertisement data is as follows:");
+    promptParts.push("The job that I am applying for is in JSON data and is as follows:");
     
     promptParts.push(JSON.stringify(content));
+
+    promptParts.push("You must also:");
+    promptParts.push("1 - Ensure the skills meet the selection criteria.");
+    promptParts.push("2 - Respond in the json data.");
 
     const responseText = await createChatCompletion(promptParts.join("\n"));
     return  JSON.parse(responseText);
