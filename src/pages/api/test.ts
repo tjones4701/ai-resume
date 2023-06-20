@@ -52,7 +52,17 @@ export type JobAdvertisement = {
     job_title: string;
     overview: string;
     responsibilities: string[];
+    required_skills: string[];
     selection_criteria: {category: string, description: string}[]
+}
+
+export type JobResponse = {
+    name: string;
+    address: string;
+    contact_number: string;
+    objective: string;
+    profile: string;
+    skills: string[];
 }
 
 async function analysePdf(content: ParsedPdf): Promise<JobAdvertisement> {
@@ -61,6 +71,10 @@ async function analysePdf(content: ParsedPdf): Promise<JobAdvertisement> {
         "job_title": "{job_title}",
         "overview": "{overview}",
         "responsibilities": [
+            "{item 1}", 
+            "{item 2}"
+        ],
+        "required_skills": [
             "{item 1}", 
             "{item 2}"
         ],
@@ -77,26 +91,41 @@ async function analysePdf(content: ParsedPdf): Promise<JobAdvertisement> {
     return JSON.parse(responseText);
 }
 
-async function createResume(content: JobAdvertisement) {
-    const promptParts: string[] = ["Please create a resume for the following job advertisement data"];
+async function createResume(content: JobAdvertisement): Promise<JobResponse> {
+    const promptParts: string[] = ["Using the following example data format create a resume json object responding to a job advertisement. Please respond with only the json data."];
+    promptParts.push("The example data set is:");
+    const exampleResume: JobResponse = {
+        name: "[name]",
+        address:"[address]",
+        contact_number: "[contact_number]",
+        objective: "{objective}",
+        profile: "{profile}",
+        skills: ["{skill 1}", "{skill 2}"],
+    }
+
+    promptParts.push(JSON.stringify(exampleResume));
+
+    promptParts.push("The job advertisement data is as follows:");
+    
     promptParts.push(JSON.stringify(content));
 
     const responseText = await createChatCompletion(promptParts.join("\n"));
-    return responseText;
+    return  JSON.parse(responseText);
 }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const filePath = path.resolve(__dirname,"../../../../files");
-    const file = path.resolve(filePath,"file.pdf");
+    const file = path.resolve(filePath,"file_2.pdf");
     const pdfData = await loadPdf(file);
     const parsedPdf = await parsePdf(pdfData);
-
     const processed = await analysePdf(parsedPdf);
 
     const response = await createResume(processed); 
     const result = {
-        advertisement: response,
+        advertisement: processed,
         resume: response
     }
+    
 
     res.json(result ?? {error: "No data"});
 }
